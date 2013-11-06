@@ -27,7 +27,13 @@ class Syslog : ObjectWrap {
 	Syslog () : ObjectWrap() {
 	};
 	
-	~Syslog (){};
+	~Syslog (){
+		if (loop_) {
+			uv_stop(loop_);
+			uv_loop_delete(loop_);
+			loop_ = NULL;
+		}
+	};
 
 
     private:
@@ -35,6 +41,7 @@ class Syslog : ObjectWrap {
 	static void close();
 	static bool connected_;
 	static char name[1024];
+	static uv_loop_t *loop_;
 };
 
 }  // namespace node

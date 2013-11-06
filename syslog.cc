@@ -6,6 +6,7 @@ using namespace node;
 Persistent<FunctionTemplate> Syslog::constructor_template;
 bool Syslog::connected_ = false;
 char Syslog::name[1024];
+uv_loop_t *Syslog::loop_ = NULL;
 
 void
 Syslog::Initialize ( Handle<Object> target)
@@ -46,6 +47,9 @@ Syslog::init ( const Arguments& args)
 	int options = args[1]->ToInt32()->Value();
 	int facility = args[2]->ToInt32()->Value();
 	open( options , facility );
+
+	loop_ = uv_loop_new();
+	uv_run(loop_, UV_RUN_DEFAULT);
 	
 	return scope.Close(Undefined());
 }
@@ -101,7 +105,7 @@ Syslog::log ( const Arguments& args)
 
 	uv_work_t *work_req = new uv_work_t();
 	work_req->data = log_req;
-	int status = uv_queue_work(uv_default_loop(), work_req, UV_Log,(uv_after_work_cb) UV_AfterLog);
+	int status = uv_queue_work(loop_, work_req, UV_Log,(uv_after_work_cb) UV_AfterLog);
 	assert(status == 0);
 
 	return scope.Close(Undefined());
